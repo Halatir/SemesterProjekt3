@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CultureHelper</string>
+    <string name="Info">Warte auf Start</string>
 </resources>
