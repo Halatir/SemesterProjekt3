@@ -42,12 +42,13 @@ public class Phone extends AppCompatActivity implements GoogleApiClient.Connecti
 
     }
 
-    //Sendet Daten an Wear, wenn aufgerufen  !!!!--->Auchtung wird noch nicht richtig empfangen
+    //Sendet Daten an Wear, wenn aufgerufen  !!!!
     private void pushStringsToWear() {
 
         Inhalt.TEXT ="ätzend";
         //Requester
         PutDataMapRequest Sender = PutDataMapRequest.create(Inhalt.NOTIFICATION_PATH);
+        Sender.setUrgent();
 
         //Diese Daten werden versendet, unter dem angegeben Pfad (siehe hier drüber)
         Sender.getDataMap().putLong("time", System.currentTimeMillis());

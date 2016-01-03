@@ -101,6 +101,8 @@ public class Watch extends Activity implements GoogleApiClient.ConnectionCallbac
     }
 }
 
+
+//nicht verwendete Code Fragmente
 // aus dem xml: android.support.wearable.view.WatchViewStub
 
 /*aus dem manifest entfernt:   <meta-data
@@ -108,11 +110,11 @@ public class Watch extends Activity implements GoogleApiClient.ConnectionCallbac
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-/*
+          </intent-filter>
 
 
-/*
+
+
    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(Bundle connectionHint) {
@@ -132,10 +134,10 @@ public class Watch extends Activity implements GoogleApiClient.ConnectionCallbac
                 })
                 .addApi(Wearable.API)
                .build();
- */
 
 
- /*private GoogleApiClient mGoogleApiClient;
+
+ private GoogleApiClient mGoogleApiClient;
 
 @Override
 protected void onCreate(Bundle savedInstanceState) {
@@ -156,67 +158,4 @@ protected void onCreate(Bundle savedInstanceState) {
         }
     });
 }
-
-@Override
-public void onDataChanged(DataEventBuffer dataEvents) {
-    for (DataEvent event : dataEvents) {
-        if (event.getType() == DataEvent.TYPE_CHANGED &&
-                event.getDataItem().getUri().getPath().equals("/image")) {
-            final DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
-            final Asset profileAsset = dataMapItem.getDataMap().getAsset("profileImage");
-            final Bitmap bitmap = loadBitmapFromAsset(profileAsset);
-            Log.d(TAG, ""+bitmap);
-            if (null != bitmap) {
-                ivQrImage.setImageBitmap(bitmap);
-                bitmap.recycle();
-            }
-
-        }
-    }
-}
-
-@Override
-protected void onStart() {
-    super.onStart();
-
-    mGoogleApiClient.connect();
-}
-
-@Override
-protected void onStop() {
-    if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
-        Wearable.DataApi.removeListener(mGoogleApiClient, this);
-        mGoogleApiClient.disconnect();
-    }
-    super.onStop();
-}
-
-
-
-@Override
-public void onConnectionFailed(ConnectionResult connectionResult) {
-    Log.d(TAG,"Connection Failed");
-}
-
-@Override
-public void onConnected(Bundle bundle) {
-    Wearable.DataApi.addListener(mGoogleApiClient, this);
-    Wearable.MessageApi.addListener(mGoogleApiClient, this);
- */
-
-
-
-/*
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_watch);
-        final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
-        stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
-            @Override
-            public void onLayoutInflated(WatchViewStub stub) {
-                mTextView = (TextView) stub.findViewById(R.id.text);
-            }
-        });
-    }
- */
+*/
