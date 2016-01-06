@@ -27,7 +27,7 @@ public class Phone extends AppCompatActivity implements
         LocationListener {
 
     private GoogleApiClient mGoogleApiClient;
-    private static final String TAG = "PHONE";
+    private static final String TAG = "CulturePhone";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,30 +117,41 @@ public class Phone extends AppCompatActivity implements
     public void onConnected(Bundle bundle) {
         LocationRequest locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY) //is more likely to use GPS than other priority values
-                .setInterval(60*1000)
-                .setFastestInterval(10*1000);
+                .setInterval(10*1000)
+                .setFastestInterval(5*1000);
 
         LocationServices.FusedLocationApi
-                .requestLocationUpdates(mGoogleApiClient, locationRequest, (LocationListener) this)
+                .requestLocationUpdates(mGoogleApiClient, locationRequest, this)
                 .setResultCallback(new ResultCallback() {
 
                     @Override
                     public void onResult(Result result) {
                         Status status = result.getStatus();
                         if (status.getStatus().isSuccess()) {
-                            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                                Log.d(TAG, "Successfully requested location updates");
+                            if (Log.isLoggable(TAG, Log.INFO)) {
+                                Log.i(TAG, "Successfully requested location updates");
                             }
                         } else {
-                            Log.e(TAG,
+                            Log.i(TAG,
                                     "Failed in requesting location updates, "
                                             + "status code: "
                                             + status.getStatusCode()
                                             + ", message: "
                                             + status.getStatusMessage());
                         }
+
                     }
                 });
+
+
+
+   /*     Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (location == null) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, this);
+        }
+        else {
+            Log.i(TAG, location.toString());
+        };*/
     }
 
     @Override
@@ -170,12 +181,12 @@ public class Phone extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         mGoogleApiClient.connect();
-        Log.d(TAG, "connected to APICLIENT" + new Date().getTime());
+        Log.i(TAG, "connected to APICLIENT" + new Date().getTime());
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.d(TAG, "Connection Failed");
+     public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.i(TAG, "Connection Failed");
     }
 
 
@@ -183,13 +194,13 @@ public class Phone extends AppCompatActivity implements
     protected void onStop() {
         super.onStop();
         mGoogleApiClient.disconnect();
-        Log.d(TAG, "disconected from APICLIENT" + new Date().getTime());
+        Log.i(TAG, "disconected from APICLIENT" + new Date().getTime());
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "connection to location client suspended");
+        if (Log.isLoggable(TAG, Log.INFO)) {
+            Log.i(TAG, "connection to location client suspended");
         }
     }
 
@@ -198,6 +209,8 @@ public class Phone extends AppCompatActivity implements
 }
 
 /*
+.requestLocationUpdates(mGoogleApiClient, locationRequest, (LocationListener) this)
+
  @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
 
