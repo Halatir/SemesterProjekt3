@@ -1,7 +1,6 @@
 package de.gruppe8.culturehelper;
 
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -9,10 +8,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -23,7 +23,7 @@ import java.util.Date;
 
 public class Phone extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener
+        GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
     private GoogleApiClient mGoogleApiClient;
@@ -35,43 +35,49 @@ public class Phone extends AppCompatActivity implements
         setContentView(R.layout.activity_phone);
 
         //Erstelle Google API Client zur Kommunikation mit Wear
-        // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-                .addApi(AppIndex.API).build();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi
-                    .removeLocationUpdates(mGoogleApiClient, (LocationListener) this);
-        }
-        mGoogleApiClient.disconnect();
-    }
+                .build();
 
         //Testbutton zum Daten versenden
         Button button = (Button) findViewById(R.id.Testbutton);
         button.setOnClickListener(new View.OnClickListener() {
-
-        public void onClick(View v) {
+            @Override
+            public void onClick(View v) {
                 pushStringsToWear();
             }
-        })
+        });
+    }
 
 
-    //Sendet Daten an Wear, wenn aufgerufen  !!!!
+    //Datenbankaufruf hier
+    private void callDatabase(){
+
+
+    }
+
+    //Algorithmus zur Warnungsermittlung hier
+    private void CreateWarning(){
+        /*if DatenbankLocation is ähnlich wie currentLocation{
+            Warnung.Type aus Datenbank holen
+            if(Warnung.type= event){
+            Inhalt.IMAGE = "Lichtpunkt.jpg"
+            Inhalt.NOTIFICATOIN_PATH ="/Event"
+            pushStringtoWear();
+            }
+            else{
+            Inhalt.IMAGE = (Datenbank) Warning.Image;
+            Inhalt.NOTIFICATION_PATH = "/Warning";
+            Inhalt.TEXT = (Datenbank) Warning.Text;
+            }
+        */
+    }
+
+
+    //Sendet Daten an Wear, wenn aufgerufen
     private void pushStringsToWear() {
 
         Inhalt.TEXT ="ätzend";
@@ -91,6 +97,19 @@ public class Phone extends AppCompatActivity implements
         TextView Information = (TextView) findViewById(R.id.Information);
         String a= "dgdfjkjhg";
         Information.setText(a);
+    }
+
+
+
+    //zu versendende Daten--->müssen anhand der Datenbank vor dem Absenden verändert werden
+    public static class Inhalt {
+
+        public static  String NOTIFICATION_PATH = "/Warning";
+        public static  Long Zeit = System.currentTimeMillis();
+        public static  String IMAGE = "Image";
+        public static String TEXT = "content";
+
+
     }
 
     //---------------------- Request Location Updates ----------------------
@@ -124,7 +143,48 @@ public class Phone extends AppCompatActivity implements
                 });
     }
 
+    @Override
+    public void onLocationChanged(Location location) {
 
+    }
+
+
+    //Pflichtfunktionen
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi
+                    .removeLocationUpdates(mGoogleApiClient, (LocationListener) this);
+        }
+        mGoogleApiClient.disconnect();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+        Log.d(TAG, "connected to APICLIENT" + new Date().getTime());
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.d(TAG, "Connection Failed");
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mGoogleApiClient.disconnect();
+        Log.d(TAG, "disconected from APICLIENT" + new Date().getTime());
+    }
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -133,17 +193,12 @@ public class Phone extends AppCompatActivity implements
         }
     }
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
 
-    }
 
-    @Override
-    public void onLocationChanged(Location location) {
+}
 
-    }
-
-    @Override
+/*
+ @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
 
     }
@@ -158,104 +213,10 @@ public class Phone extends AppCompatActivity implements
 
     }
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+       @Override
+    public void onLocationChanged(Location location) {
 
     }
-
-
-//zu versendende Daten--->müssen anhand der Datenbank vor dem Absenden verändert werden
-    public static class Inhalt {
-
-        public static  String NOTIFICATION_PATH = "/Warning";
-        public static  Long Zeit = System.currentTimeMillis();
-        public static  String IMAGE = "Image";
-        public static String TEXT = "content";
-
-
-    }
-
-    //Pflichtfunktionen onStart,onStop,onConnected,onConnectionFailed/Suspended, onStop
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mGoogleApiClient.connect();
-        Log.d(TAG, "connected to APICLIENT" + new Date().getTime());
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Phone Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://de.gruppe8.culturehelper/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(mGoogleApiClient, viewAction);
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d(TAG, "Connected");
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.d(TAG, "Connection Suspended");
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.d(TAG, "Connection Failed");
-    }
-
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Phone Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://de.gruppe8.culturehelper/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(mGoogleApiClient, viewAction);
-        mGoogleApiClient.disconnect();
-        Log.d(TAG, "disconected from APICLIENT" + new Date().getTime());
-    }
-
-
-
-}
-
-/*
-addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                    @Override
-                    public void onConnected(Bundle connectionHint) {
-                        Log.d(TAG, "onConnected: " + connectionHint);
-                    }
-
-                    @Override
-                    public void onConnectionSuspended(int cause) {
-                        Log.d(TAG, "onConnectionSuspended: " + cause);
-                    }
-                })
-                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(ConnectionResult result) {
-                        Log.d(TAG, "onConnectionFailed: " + result);
-                    }
-                })
-                .addApi(Wearable.API)
-                .addApi(AppIndex.API).build();
 
  */
 
