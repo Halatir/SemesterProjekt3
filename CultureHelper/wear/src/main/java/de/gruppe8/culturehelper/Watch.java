@@ -2,6 +2,8 @@ package de.gruppe8.culturehelper;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -16,11 +18,12 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.util.Objects;
 
-public class Watch extends Activity implements
+public class Watch extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         DataApi.DataListener {
 
+    ViewPager viewpager;
     private GoogleApiClient mGoogleApiClient;
     private static final String TAG = "WEAR";
 
@@ -44,6 +47,10 @@ public class Watch extends Activity implements
                 .addOnConnectionFailedListener(this)
               //  .addApi(AppIndex.API)
                 .build();
+        //viewpager initialisieren
+        viewpager = (ViewPager) findViewById(R.id.pager);
+        PagerAdapter padapter = new PagerAdapter(getSupportFragmentManager());
+            viewpager.setAdapter(padapter);
     }
 
     //Wenn Daten vom Handy abgesendet werden, werden sie hier empfangen
