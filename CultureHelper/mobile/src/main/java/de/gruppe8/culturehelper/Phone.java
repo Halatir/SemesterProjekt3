@@ -1,12 +1,13 @@
 package de.gruppe8.culturehelper;
 
+import android.database.SQLException;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -19,6 +20,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.IOException;
 import java.util.Date;
 
 public class Phone extends AppCompatActivity implements
@@ -28,6 +30,8 @@ public class Phone extends AppCompatActivity implements
 
     private GoogleApiClient mGoogleApiClient;
     private static final String TAG = "CulturePhone";
+    private boolean t=false;
+    private DatabaseCall DB = new DatabaseCall(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,37 +54,96 @@ public class Phone extends AppCompatActivity implements
                 pushStringsToWear();
             }
         });
-    }
+
+        try {
+            DB.createDataBase();
+
+        } catch (IOException ioe) {
+            throw new Error("Unable to create database");
+        }
+        try {
+
+            DB.openDataBase();
+
+        }catch(SQLException sqle){
+            throw sqle;
+        }
+
+      /*  String a[] =  DB.Anfrage2("SELECT * FROM Ort WHERE Region =?", new String[]{"Deutschland"});
+        TextView Information = (TextView) findViewById(R.id.Information);
+            Information.setText(a[0]);
+        Log.i("DB",a[0]);*/
 
 
-    //Datenbankaufruf hier
-    private void callDatabase(){
 
 
     }
 
     //Algorithmus zur Warnungsermittlung hier
-    private void CreateWarning(){
-        /*if DatenbankLocation is ähnlich wie currentLocation{
-            Warnung.Type aus Datenbank holen
-            if(Warnung.type= event){
-            Inhalt.IMAGE = "Lichtpunkt.jpg"
-            Inhalt.NOTIFICATOIN_PATH ="/Event"
-            pushStringtoWear();
+    private void CreateWarning(double cLat, double cLong){
+        //Alle Ort Locations werden angefragt
+        double locs[][]= DB.Anfrage("SELECT Latitude,Longitude  FROM Ort ",null);
+        //Per schleife werden sie alle auf folgende Bedingungen geprüft
+        for(int i=0; i<locs.length; i++) {
+
+            //Befindet sich die derzeitige Location im Umkreis der Ortslocation?
+            if ((cLat <= locs[i][0] + 0.8 && cLat >= locs[i][0] - 0.8) && (cLong <= locs[i][1] + 0.8 && cLong >= locs[i][1] - 0.8)) {
+                //Erfragt den Typ des Entsprechenden Ortes(kann man sich sparen wenn in loc eingebaut)
+                String OTyp[][] =DB.Anfrage2("SELECT Typus,Region,_id FROM Ort WHERE Latitude=?", new String []{Double.toString(locs[i][0])});
+                //Finde alle Warnungen die dazu passen
+                Log.i("CulturePhone",""+OTyp[0][0]);
+                //TODO:ergänze WHERE Region=Ort.Region
+                String Warnung[][] =DB.Anfrage2("SELECT Text,Delaymin,Sperre FROM Warnung WHERE Typus=?", new String[]{OTyp[0][0]});
+
+                //Für alle diese Warnungen...
+                for(int j=0; j<Warnung.length;j++){
+                    Log.i(TAG,"Gefunde Warnung:"+Warnung[j][0]);
+                    //wird geprüft ob sie ein Event sind oder nicht
+                    if( OTyp[0][0]=="Event"){
+                        //und die nötige Information an Wear gepushed
+                        Inhalt.IMAGE="Lichtpunkt.jpg";
+                        Inhalt.NOTIFICATION_PATH="/Event";
+                        Inhalt.LAT=locs[i][0];
+                        Inhalt.LONG=locs[i][1];
+                        pushStringsToWear();
+                        Log.i(TAG, "Eventgefunden und gepushed");
+                    }
+                    else {
+                        //Verlegt die Ausführung der warnung um die in "Delaymin" angegebene Delaytime
+                        Log.i(TAG, "Warnung gefunden");
+                        //Überprüft ob Funktion in den letzen 60 minuten schoneinmal aufgerufen wurde.
+                        // wenn noch nie aufgerufen oder die Zeit schon abgelaufen ist:
+                        if (Integer.parseInt(Warnung[j][2]) == 0 || Integer.parseInt(Warnung[j][2]) + 60 <= System.currentTimeMillis() / 60000) {
+                            Handler myHandler = new Handler();
+                            int zeit=Integer.parseInt(Warnung[j][1])*60000+1;
+                            myHandler.postDelayed(mMyRunnable, zeit);
+
+                            if(t==true) {
+                                Log.i(TAG, "Erfolgreich Delay abgewartet");
+                                //Überprüft ob Delaytime abgelaufen ist und ob die Funktion in den letzen 60 minuten schoneinmal aufgerufen wurde.
+                                // wenn noch nie aufgerufen oder die Zeit schon abgelaufen ist:
+
+                                //Sende nötige Informationen an Wear
+                                Inhalt.IMAGE = "" + OTyp[0][0] + ".jpg";
+                                Inhalt.TEXT = "" + Warnung[j][0];
+                                Inhalt.NOTIFICATION_PATH = "/Warnung";
+                                pushStringsToWear();
+                                DB.setDB("UPDATE Warnung SET Sperre =" + System.currentTimeMillis() / 60000 + " WHERE Text='" + Warnung[j][0]+"'");
+                                Log.i(TAG, "Derzeit keine Sperrung bei dieser warnung");
+                                t = false;
+                            }
+                        }
+                    }
+                }
             }
-            else{
-            Inhalt.IMAGE = (Datenbank) Warning.Image;
-            Inhalt.NOTIFICATION_PATH = "/Warning";
-            Inhalt.TEXT = (Datenbank) Warning.Text;
-            }
-        */
+        }
     }
+
 
 
     //Sendet Daten an Wear, wenn aufgerufen
     private void pushStringsToWear() {
 
-        Inhalt.TEXT ="ätzend";
         //Requester
         PutDataMapRequest Sender = PutDataMapRequest.create(Inhalt.NOTIFICATION_PATH);
         Sender.setUrgent();
@@ -89,14 +152,12 @@ public class Phone extends AppCompatActivity implements
         Sender.getDataMap().putLong("time", System.currentTimeMillis());
         Sender.getDataMap().putString("Bilddateiname", Inhalt.IMAGE);
         Sender.getDataMap().putString("Text", Inhalt.TEXT);
+        Sender.getDataMap().putDouble("LONG", Inhalt.LONG);
+        Sender.getDataMap().putDouble("LAT", Inhalt.LAT);
+
 
 
         Wearable.DataApi.putDataItem(mGoogleApiClient, Sender.asPutDataRequest());
-
-        //bestätigt das aufrufen der Funktion
-        TextView Information = (TextView) findViewById(R.id.Information);
-        String a= "dgdfjkjhg";
-        Information.setText(a);
     }
 
 
@@ -108,9 +169,16 @@ public class Phone extends AppCompatActivity implements
         public static  Long Zeit = System.currentTimeMillis();
         public static  String IMAGE = "Image";
         public static String TEXT = "content";
-
+        public static double LONG =  0.0000;
+        public static double LAT =  0.0000;
 
     }
+    private Runnable mMyRunnable = new Runnable()
+    {@Override
+        public void run() {t=true;}
+    };
+
+
 
     //---------------------- Request Location Updates ----------------------
     @Override
@@ -143,19 +211,15 @@ public class Phone extends AppCompatActivity implements
                     }
                 });
 
-
-
-   /*     Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (location == null) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, this);
-        }
-        else {
-            Log.i(TAG, location.toString());
-        };*/
     }
 
     @Override
     public void onLocationChanged(Location location) {
+        //Location l = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        double cLat = location.getLatitude();
+        double cLong = location.getLongitude();
+        CreateWarning(cLat,cLong);
+        Log.i(TAG, "LocationChanged");
 
     }
 
