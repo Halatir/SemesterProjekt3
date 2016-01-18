@@ -1,10 +1,13 @@
 package de.gruppe8.culturehelper;
 
-import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.widget.RelativeLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -15,8 +18,6 @@ import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
-
-import java.util.Objects;
 
 public class Watch extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -33,6 +34,8 @@ public class Watch extends FragmentActivity implements
     private String Text;
     private String Bild;
     private Long Zeit;
+    private boolean FakeDrag=true;
+    public PagerAdapter padapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,20 +48,76 @@ public class Watch extends FragmentActivity implements
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-              //  .addApi(AppIndex.API)
+                        //  .addApi(AppIndex.API)
                 .build();
+
+       // final Handler myHandler = new Handler();
         //viewpager initialisieren
         viewpager = (ViewPager) findViewById(R.id.pager);
-        PagerAdapter padapter = new PagerAdapter(getSupportFragmentManager());
-            viewpager.setAdapter(padapter);
+        padapter = new PagerAdapter(getSupportFragmentManager());
+        viewpager.setAdapter(padapter);
+        viewpager.beginFakeDrag();
+        final Handler myHandler = new Handler();
+
+        viewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            public void onPageScrollStateChanged(int state) {
+            }
+
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            public void onPageSelected(int position) {
+               // Log.i("CultureWatch", "" + position);
+                if (position == 0) {
+                    if(FakeDrag==false) {
+                  //      Log.i("CultureWatch", "fake drag began" );
+                        myHandler.postDelayed(mMyRunnable, 10);
+                        FakeDrag=true;
+                    }
+                }
+                else if(position==1){
+                    if (FakeDrag == true) {
+                        viewpager.endFakeDrag();
+                   //     Log.i("CultureWatch", "fake drag ended");
+
+                        FakeDrag=false;
+                    }
+                }
+                else if(position==2){
+                    TableRow layout2 = (TableRow)findViewById(R.id.fragment_three_layout);
+                 //   TableRow layout22 = (TableRow)findViewById(R.id.fragment_three_layout2);
+                    Color c= new Color();
+                    //c.;
+                    //layout22.setBackgroundColor();
+
+                    if(Bild.equals("restaurant")){
+                        layout2.setBackgroundResource(R.drawable.restaurant2);
+                    }
+                    else if(Bild.equals("gesetz")){
+                        layout2.setBackgroundResource(R.drawable.gesetz2);
+                    }
+                    else if(Bild.equals("other")){
+                        layout2.setBackgroundResource(R.drawable.other2);
+                    }
+                    TextView Nachricht = (TextView) findViewById(R.id.Nachricht);
+                    Nachricht.setText(Text);
+                }
+            }
+        });
     }
+
+    private Runnable mMyRunnable = new Runnable()
+    {@Override
+     public void run() {Log.i("CultureWatch", "" + viewpager.beginFakeDrag());}
+    };
+
 
     //Wenn Daten vom Handy abgesendet werden, werden sie hier empfangen
     public void onDataChanged(DataEventBuffer dataEvent) {
         for (DataEvent event : dataEvent) {
             if (event.getType() == DataEvent.TYPE_CHANGED &&
-                    event.getDataItem().getUri().getPath().equals("/Warning")) {
-
+                    event.getDataItem().getUri().getPath().equals("/Warnung")) {
+                Log.i("CultureWatch","recieved");
 
                 final DataMapItem dMI = DataMapItem.fromDataItem(event.getDataItem());
                 //Empfangbare Daten, zur weiterverarbeitung If states einbauen und Folge festlegen(externe Funktionen?)
@@ -66,12 +125,11 @@ public class Watch extends FragmentActivity implements
                 Bild = dMI.getDataMap().getString("Bilddateiname");
                 Zeit = dMI.getDataMap().getLong("time");
 
-                setContentView(R.layout.warning);
+                Hintergrund();
             }
 
             if (event.getType() == DataEvent.TYPE_CHANGED &&
                     event.getDataItem().getUri().getPath().equals("/Event")) {
-
 
                 final DataMapItem dMI = DataMapItem.fromDataItem(event.getDataItem());
                 //Empfangbare Daten, zur weiterverarbeitung If states einbauen und Folge festlegen(externe Funktionen?)
@@ -81,12 +139,21 @@ public class Watch extends FragmentActivity implements
 
                 //setContentView(R.layout.Eventbilschirm);
             }
+        }
+    }
 
-            //Teststring
-            TextView Testergebnis = (TextView) findViewById(R.id.text);
-            String s= Objects.toString(Zeit, null);
-            // Testergebnis.setText(s);
-
+    private void Hintergrund(){
+        viewpager.setCurrentItem(1);
+        RelativeLayout layout1 = (RelativeLayout)findViewById(R.id.fragment_two_layout);
+        if(Bild.equals("restaurant")) {
+            layout1.setBackgroundResource(R.drawable.restaurant);
+            Log.i("CultureWatch",Bild);
+        }
+        else if(Bild.equals("gesetz")){
+            layout1.setBackgroundResource(R.drawable.gesetz);
+        }
+        else if(Bild.equals("other")){
+            layout1.setBackgroundResource(R.drawable.other);
         }
     }
 
@@ -143,74 +210,33 @@ public class Watch extends FragmentActivity implements
 //nicht verwendete Code Fragmente
 // aus dem xml: android.support.wearable.view.WatchViewStub
 
-/*  adb -d forward tcp:emulator-5554 tcp:X9LDU15826002349
-   7D 84 42 92 A9 D0 46 9A   AA 80 32 73 93 92 FB 4B 3E 12 ED 39
+/*
 
-  public void onStatusChanged(String provider, int status, Bundle extras) {
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:id="@+id/fragment_three_layout"
+    >
 
-    }
+    <TableRow
+        android:layout_width="320px"
+        android:layout_height="100px"
+        android:background="#CC000000"
+        android:layout_centerVertical="true"
+        android:id="@+id/fragment_three_layout2"
+        android:layout_alignParentStart="true">
 
-    public void onProviderEnabled(String provider) {
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text=""
+            android:id="@+id/Nachricht"
+            android:textAlignment="center"
+            android:textColor="#ffffff" />
+    </TableRow>
+</RelativeLayout>
 
-    }
-
-
-    public void onProviderDisabled(String provider) {
-
-    }
-
-
-aus dem manifest entfernt:   <meta-data
- <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-          </intent-filter>
-
-
-
-
-   .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                    @Override
-                    public void onConnected(Bundle connectionHint) {
-                        Log.d(TAG, "onConnected: " + connectionHint);
-                    }
-
-                    @Override
-                    public void onConnectionSuspended(int cause) {
-                        Log.d(TAG, "onConnectionSuspended: " + cause);
-                    }
-                })
-                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(ConnectionResult result) {
-                        Log.d(TAG, "onConnectionFailed: " + result);
-                    }
-                })
-                .addApi(Wearable.API)
-               .build();
-
-
-
- private GoogleApiClient mGoogleApiClient;
-
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_qrcode_generation);
-
-    mGoogleApiClient = new GoogleApiClient.Builder(this)
-            .addApi(Wearable.API)
-            .addConnectionCallbacks(this)
-            .addOnConnectionFailedListener(this)
-            .build();
-
-    final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
-    stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
-        @Override
-        public void onLayoutInflated(WatchViewStub stub) {
-            ivQrImage = (ImageView) stub.findViewById(R.id.ivQRImage);
-        }
-    });
-}
 */

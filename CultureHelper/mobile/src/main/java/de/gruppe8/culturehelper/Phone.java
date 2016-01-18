@@ -87,36 +87,38 @@ public class Phone extends AppCompatActivity implements
         for(int i=0; i<locs.length; i++) {
 
             //Befindet sich die derzeitige Location im Umkreis der Ortslocation?
-            if ((cLat <= locs[i][0] + 0.8 && cLat >= locs[i][0] - 0.8) && (cLong <= locs[i][1] + 0.8 && cLong >= locs[i][1] - 0.8)) {
+            if ((cLat <= locs[i][0] + 0.008 && cLat >= locs[i][0] - 0.008) && (cLong <= locs[i][1] + 0.008 && cLong >= locs[i][1] - 0.008)) {
                 //Erfragt den Typ des Entsprechenden Ortes(kann man sich sparen wenn in loc eingebaut)
-                String OTyp[][] =DB.Anfrage2("SELECT Typus,Region,_id FROM Ort WHERE Latitude=?", new String []{Double.toString(locs[i][0])});
+                String OTyp[][] =DB.Anfrage2("SELECT Typus,Region,Name FROM Ort WHERE Latitude=?", new String []{Double.toString(locs[i][0])});
+               Log.i(TAG,""+OTyp[0][0]);
                 //Finde alle Warnungen die dazu passen
-                Log.i("CulturePhone",""+OTyp[0][0]);
                 //TODO:ergänze WHERE Region=Ort.Region
                 String Warnung[][] =DB.Anfrage2("SELECT Text,Delaymin,Sperre FROM Warnung WHERE Typus=?", new String[]{OTyp[0][0]});
 
                 //Für alle diese Warnungen...
                 for(int j=0; j<Warnung.length;j++){
-                    Log.i(TAG,"Gefunde Warnung:"+Warnung[j][0]);
                     //wird geprüft ob sie ein Event sind oder nicht
-                    if( OTyp[0][0]=="Event"){
+                    if( OTyp[0][0].equals("event")){
                         //und die nötige Information an Wear gepushed
-                        Inhalt.IMAGE="Lichtpunkt.jpg";
+                       Inhalt.IMAGE="Lichtpunkt.jpg";
                         Inhalt.NOTIFICATION_PATH="/Event";
                         Inhalt.LAT=locs[i][0];
                         Inhalt.LONG=locs[i][1];
-                        pushStringsToWear();
-                        Log.i(TAG, "Eventgefunden und gepushed");
+                      //  pushStringsToWear();
+                      //  Log.i(TAG, "Event gefunden und gepushed"+Warnung[j][0]);
                     }
                     else {
                         //Verlegt die Ausführung der warnung um die in "Delaymin" angegebene Delaytime
-                        Log.i(TAG, "Warnung gefunden");
+                       // Log.i(TAG,"Gefunde Warnung:"+Warnung[j][0]);
                         //Überprüft ob Funktion in den letzen 60 minuten schoneinmal aufgerufen wurde.
                         // wenn noch nie aufgerufen oder die Zeit schon abgelaufen ist:
-                        if (Integer.parseInt(Warnung[j][2]) == 0 || Integer.parseInt(Warnung[j][2]) + 60 <= System.currentTimeMillis() / 60000) {
+                        int s=Integer.parseInt(Warnung[j][2]);
+                        if (s == 0 ||s + 60 <= System.currentTimeMillis() / 60000) {
                             Handler myHandler = new Handler();
                             int zeit=Integer.parseInt(Warnung[j][1])*60000+1;
                             myHandler.postDelayed(mMyRunnable, zeit);
+                            Log.i(TAG, "Derzeit keine Sperrung bei dieser warnung");
+                            DB.setDB("UPDATE Warnung SET Sperre =" + System.currentTimeMillis() / 60000 + " WHERE Text='" + Warnung[j][0] + "'");
 
                             if(t==true) {
                                 Log.i(TAG, "Erfolgreich Delay abgewartet");
@@ -127,9 +129,10 @@ public class Phone extends AppCompatActivity implements
                                 Inhalt.IMAGE = "" + OTyp[0][0] + ".jpg";
                                 Inhalt.TEXT = "" + Warnung[j][0];
                                 Inhalt.NOTIFICATION_PATH = "/Warnung";
-                                pushStringsToWear();
-                                DB.setDB("UPDATE Warnung SET Sperre =" + System.currentTimeMillis() / 60000 + " WHERE Text='" + Warnung[j][0]+"'");
-                                Log.i(TAG, "Derzeit keine Sperrung bei dieser warnung");
+                               pushStringsToWear();
+                               // DB.setDB("UPDATE Warnung SET Sperre =" + System.currentTimeMillis() / 60000 + " WHERE Text='" + Warnung[j][0]+"'");
+
+
                                 t = false;
                             }
                         }
@@ -143,7 +146,6 @@ public class Phone extends AppCompatActivity implements
 
     //Sendet Daten an Wear, wenn aufgerufen
     private void pushStringsToWear() {
-
         //Requester
         PutDataMapRequest Sender = PutDataMapRequest.create(Inhalt.NOTIFICATION_PATH);
         Sender.setUrgent();
@@ -155,8 +157,6 @@ public class Phone extends AppCompatActivity implements
         Sender.getDataMap().putDouble("LONG", Inhalt.LONG);
         Sender.getDataMap().putDouble("LAT", Inhalt.LAT);
 
-
-
         Wearable.DataApi.putDataItem(mGoogleApiClient, Sender.asPutDataRequest());
     }
 
@@ -165,10 +165,10 @@ public class Phone extends AppCompatActivity implements
     //zu versendende Daten--->müssen anhand der Datenbank vor dem Absenden verändert werden
     public static class Inhalt {
 
-        public static  String NOTIFICATION_PATH = "/Warning";
+        public static  String NOTIFICATION_PATH = "/Warnung";
         public static  Long Zeit = System.currentTimeMillis();
-        public static  String IMAGE = "Image";
-        public static String TEXT = "content";
+        public static  String IMAGE = "restaurant";
+        public static String TEXT = "content content content content content";
         public static double LONG =  0.0000;
         public static double LAT =  0.0000;
 
@@ -273,27 +273,6 @@ public class Phone extends AppCompatActivity implements
 }
 
 /*
-.requestLocationUpdates(mGoogleApiClient, locationRequest, (LocationListener) this)
-
- @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
-       @Override
-    public void onLocationChanged(Location location) {
-
-    }
 
  */
 

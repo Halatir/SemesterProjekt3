@@ -3,14 +3,18 @@ package de.gruppe8.culturehelper;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 
 /**
  * Created by Janis on 10.01.2016.
  */
 public class PagerAdapter extends FragmentPagerAdapter {
+    ViewPager viewpager;
+
     public PagerAdapter(FragmentManager fm) {
         super(fm);
     }
+
 
     @Override
     public Fragment getItem(int arg0) {
@@ -33,3 +37,9 @@ public class PagerAdapter extends FragmentPagerAdapter {
         return 3;
     }
 }
+/*
+  public PagerAdapter(FragmentManager fm) {
+
+       // super(fm);
+    }
+ */
