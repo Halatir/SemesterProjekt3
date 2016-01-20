@@ -6,7 +6,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,7 +33,6 @@ public class DatabaseCall extends SQLiteOpenHelper {
 
     public DatabaseCall(Context context) {
         super(context, DB_Name, null, DB_Version);
-        Log.i("DB", "anfang gemacht");
         this.myContext = context;
     }
 
@@ -153,7 +151,6 @@ public class DatabaseCall extends SQLiteOpenHelper {
 
         Cursor c = myDataBase.rawQuery(Anfrage, bedingung);
         String s[][]= new String[c.getCount()][3];
-        Log.i("CulturePhone",""+c.getCount());
         c.moveToFirst();
         for(int i=0; i<c.getCount();i++) {
                 s[i][0] = (c.getString(0));
