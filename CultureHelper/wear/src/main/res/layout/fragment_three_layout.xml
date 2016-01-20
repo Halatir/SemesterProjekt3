@@ -15,14 +15,17 @@ android:background="#000000"
         android:textColor="#ffffff"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:background="#000000"
+        android:textSize="@dimen/abc_dialog_padding_top_material" />
 
     <TableRow
-        android:layout_width="220px"
-        android:layout_height="match_parent"
+        android:layout_width="180px"
+        android:layout_height="180px"
         android:id="@+id/fragment_three_layout"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:background="#000000"
         android:layout_above="@+id/Nachricht"></TableRow>
 
 </RelativeLayout>

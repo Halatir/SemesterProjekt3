@@ -2,8 +2,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/restaurant"
+    android:background="#000000"
     android:id="@+id/fragment_two_layout"
     >
+    <ImageView
+        android:id="@+id/imageViewCompass"
+        android:layout_width="320px"
+        android:layout_height="320px"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:background="#000000"
+        />
+
 
 </RelativeLayout>
