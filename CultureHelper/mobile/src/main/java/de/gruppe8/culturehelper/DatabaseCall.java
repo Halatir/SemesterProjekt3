@@ -25,11 +25,6 @@ public class DatabaseCall extends SQLiteOpenHelper {
     private SQLiteDatabase myDataBase;
     private final Context myContext;
 
-  /*  private final static String tabelle1 = "Nutzer";
-
-    private final static String nutzer_id = "nutzer_id";
-    private final static String nutzer_name = "nutzer_Name";
-    private final static String nutzer_email = "nutzer_email";*/
 
     public DatabaseCall(Context context) {
         super(context, DB_Name, null, DB_Version);
@@ -41,21 +36,16 @@ public class DatabaseCall extends SQLiteOpenHelper {
         boolean dbExist = checkDataBase();
 
         if (dbExist) {
-            //do nothing - database already exist
+            //Datenbank existiert bereits
         } else {
-            //By calling this method and empty database will be created into the default system path
-            //of your application so we are gonna be able to overwrite that database with our database.
+            //Leere Datenbank wird im Standartverzeichnis der App angelegt
             this.getWritableDatabase();
             copyDataBase();
         }
 
     }
 
-    /**
-     * Check if the database already exist to avoid re-copying the file each time you open the application.
-     *
-     * @return true if it exists, false if it doesn't
-     */
+    //Überprüft ob die Datenbank bereits vorhanden ist, damit die Datenbank nicht bei jedem start kopiert wird
     private boolean checkDataBase() {
 
         SQLiteDatabase checkDB = null;
@@ -65,7 +55,7 @@ public class DatabaseCall extends SQLiteOpenHelper {
             checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
 
         } catch (SQLiteException e) {
-            //database does't exist yet.
+            //Datenbank existiert nicht
         }
         if (checkDB != null) {
             checkDB.close();
@@ -73,44 +63,77 @@ public class DatabaseCall extends SQLiteOpenHelper {
         return checkDB != null ? true : false;
     }
 
-    /**
-     * Copies your database from your local assets-folder to the just created empty database in the
-     * system folder, from where it can be accessed and handled.
-     * This is done by transfering bytestream.
-     */
+    //Kopiert die eigene Datenbank aus dem Lokalen assets-Ordner in die eben erstellte, leere Datenbank
+    //im Systemordner der App, wo man auf sie zugreifen kann.
     private void copyDataBase() throws IOException {
 
-        //Open your local db as the input stream
+        //Öffne lokale Datenbank als Inputstream
         InputStream myInput = myContext.getAssets().open(DB_Name);
 
-        // Path to the just created empty db
+        // Pfad zur eben erstellten Datenbank
         String outFileName = DB_PATH + DB_Name;
-
-        //myDataBase.close();
-
-        //Open the empty db as the output stream
+        //Öffne den leeren Datenbank-outputstream
         OutputStream myOutput = new FileOutputStream(outFileName);
 
-        //transfer bytes from the inputfile to the outputfile
+        //Transferiere bytes vom Inputstream zum Outputstream
         byte[] buffer = new byte[1024];
         int length;
         while ((length = myInput.read(buffer)) > 0) {
             myOutput.write(buffer, 0, length);
         }
-        //Close the streams
+        //Schließe die Streams
         myOutput.flush();
         myOutput.close();
         myInput.close();
 
     }
-
+    //Öffnet die Datenbank
     public void openDataBase() throws SQLException {
-
-        //Open the database
         String myPath = DB_PATH + DB_Name;
         myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+    }
+
+    //Anfrage die einen Double[][] zurückgeben kann
+    public double[][] Anfrage(String Anfrage, String[] bedingung) {
+
+        Cursor c = myDataBase.rawQuery(Anfrage, bedingung);
+        double [][] s= new double[c.getCount()][2];
+        c.moveToFirst();
+
+        for(int i=0; i<c.getCount();i++) {
+            s[i][0] = c.getDouble(0);
+            s[i][1] = c.getDouble(1);
+            c.moveToNext();
+                //c.moveToPosition(Position);
+
+        }
+        c.close();
+        return s;
 
     }
+
+    //Anfrage, die einen String[][] zurückgeben kann
+    public String [][] Anfrage2(String Anfrage, String[] bedingung) {
+
+        Cursor c = myDataBase.rawQuery(Anfrage, bedingung);
+        String s[][]= new String[c.getCount()][3];
+        c.moveToFirst();
+        for(int i=0; i<c.getCount();i++) {
+                s[i][0] = (c.getString(0));
+                s[i][1] = (c.getString(1));
+                s[i][2] = (c.getString(2));
+                c.moveToNext();
+
+        }
+        c.close();
+        return s;
+    }
+
+    //Zum beschreiben der Datenbank
+    public void setDB(String befehl){
+        myDataBase.execSQL(befehl);
+    }
+
 
     @Override
     public synchronized void close() {
@@ -129,68 +152,4 @@ public class DatabaseCall extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
     }
-
-    public double[][] Anfrage(String Anfrage, String[] bedingung) {
-
-        Cursor c = myDataBase.rawQuery(Anfrage, bedingung);
-        double [][] s= new double[c.getCount()][2];
-        c.moveToFirst();
-
-        for(int i=0; i<c.getCount();i++) {
-            s[i][0] = c.getDouble(0);
-            s[i][1] = c.getDouble(1);
-            c.moveToNext();
-                //c.moveToPosition(Position);
-
-        }
-        c.close();
-        return s;
-
-    }
-    public String [][] Anfrage2(String Anfrage, String[] bedingung) {
-
-        Cursor c = myDataBase.rawQuery(Anfrage, bedingung);
-        String s[][]= new String[c.getCount()][3];
-        c.moveToFirst();
-        for(int i=0; i<c.getCount();i++) {
-                s[i][0] = (c.getString(0));
-                s[i][1] = (c.getString(1));
-                s[i][2] = (c.getString(2));
-                c.moveToNext();
-
-        }
-        c.close();
-        return s;
-
-    }
-    public void setDB(String befehl){
-        myDataBase.execSQL(befehl);
-
-    }
 }
-
-/*
-      Cursor cur = db.query("tbl_countries",
-       		null, null, null, null, null, null);
-        cur.moveToFirst();
-        while (cur.isAfterLast() == false) {
-            view.append("n" + cur.getString(1));
-       	    cur.moveToNext();
-        }
-        cur.close();
-    }
-}
-
-
-int id[] = new int[c.getCount()];
-        int i = 0;
-        if (c.getCount() > 0)
-        {
-            c.moveToFirst();
-            do {
-                id[i] = c.getInt(c.getColumnIndex("field_name"));
-                i++;
-            } while (c.moveToNext());
-            c.close();
-        }
- */

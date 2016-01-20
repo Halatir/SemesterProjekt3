@@ -1,17 +1,24 @@
 package de.gruppe8.culturehelper;
 
-import android.graphics.Color;
+import android.graphics.Typeface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
@@ -22,20 +29,27 @@ import com.google.android.gms.wearable.Wearable;
 public class Watch extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        DataApi.DataListener {
+        DataApi.DataListener, SensorEventListener {
 
     ViewPager viewpager;
     private GoogleApiClient mGoogleApiClient;
     private static final String TAG = "WEAR";
-
-    private TextView mTextView;
-    GoogleApiAvailability a;
 
     private String Text;
     private String Bild;
     private Long Zeit;
     private boolean FakeDrag=true;
     public PagerAdapter padapter;
+
+    private ImageView image;
+    private float currentDegree = 0f;
+    private SensorManager mSensorManager;
+    private boolean ComOn=false;
+    private Location l;
+    private Location lnow;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +73,11 @@ public class Watch extends FragmentActivity implements
         viewpager.beginFakeDrag();
         final Handler myHandler = new Handler();
 
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        image = (ImageView)findViewById(R.id.imageViewCompass);
+
+
+
         viewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             public void onPageScrollStateChanged(int state) {
             }
@@ -67,28 +86,27 @@ public class Watch extends FragmentActivity implements
             }
 
             public void onPageSelected(int position) {
-               // Log.i("CultureWatch", "" + position);
+                Log.i("CultureWatch", "" + position);
                 if (position == 0) {
                     if(FakeDrag==false) {
-                  //      Log.i("CultureWatch", "fake drag began" );
                         myHandler.postDelayed(mMyRunnable, 10);
                         FakeDrag=true;
                     }
+                    Handler myHandler = new Handler();
+                    myHandler.postDelayed(mMyRunnable2, 10000);
+                    ComOn=false;
                 }
                 else if(position==1){
                     if (FakeDrag == true) {
                         viewpager.endFakeDrag();
-                   //     Log.i("CultureWatch", "fake drag ended");
-
                         FakeDrag=false;
                     }
                 }
                 else if(position==2){
                     TableRow layout2 = (TableRow)findViewById(R.id.fragment_three_layout);
-                 //   TableRow layout22 = (TableRow)findViewById(R.id.fragment_three_layout2);
-                    Color c= new Color();
-                    //c.;
-                    //layout22.setBackgroundColor();
+                    TextView txt = (TextView) findViewById(R.id.Nachricht);
+                    Typeface type = Typeface.createFromAsset(getAssets(),"fonts/WorkSans-Regular.otf");
+                    txt.setTypeface(type);
 
                     if(Bild.equals("restaurant")){
                         layout2.setBackgroundResource(R.drawable.restaurant2);
@@ -96,11 +114,13 @@ public class Watch extends FragmentActivity implements
                     else if(Bild.equals("gesetz")){
                         layout2.setBackgroundResource(R.drawable.gesetz2);
                     }
-                    else if(Bild.equals("other")){
+                    else if(Bild.equals("other")) {
                         layout2.setBackgroundResource(R.drawable.other2);
                     }
+
                     TextView Nachricht = (TextView) findViewById(R.id.Nachricht);
                     Nachricht.setText(Text);
+                    ComOn=false;
                 }
             }
         });
@@ -109,6 +129,13 @@ public class Watch extends FragmentActivity implements
     private Runnable mMyRunnable = new Runnable()
     {@Override
      public void run() {Log.i("CultureWatch", "" + viewpager.beginFakeDrag());}
+    };
+    private Runnable mMyRunnable2 = new Runnable()
+    {@Override
+     public void run() {
+            RelativeLayout l=(RelativeLayout) findViewById(R.id.fragment_one_layout);
+            l.setBackgroundColor(0xFF000000);
+        }
     };
 
 
@@ -125,7 +152,8 @@ public class Watch extends FragmentActivity implements
                 Bild = dMI.getDataMap().getString("Bilddateiname");
                 Zeit = dMI.getDataMap().getLong("time");
 
-                Hintergrund();
+                viewpager.setCurrentItem(1);
+                Background();
             }
 
             if (event.getType() == DataEvent.TYPE_CHANGED &&
@@ -134,17 +162,35 @@ public class Watch extends FragmentActivity implements
                 final DataMapItem dMI = DataMapItem.fromDataItem(event.getDataItem());
                 //Empfangbare Daten, zur weiterverarbeitung If states einbauen und Folge festlegen(externe Funktionen?)
                 Text = dMI.getDataMap().getString("Text");
-                Bild = dMI.getDataMap().getString("Bilddateiname");
                 Zeit = dMI.getDataMap().getLong("time");
+                //double LAT=dMI.getDataMap().getDouble("LAT");
+                //double LONG=dMI.getDataMap().getDouble("LAT");
+                //double LatNow=dMI.getDataMap().getDouble("LAT");
+                //double LongNow=dMI.getDataMap().getDouble("LAT");
+                Bild = "event";
+                viewpager.setCurrentItem(1);
+                Compass();
 
-                //setContentView(R.layout.Eventbilschirm);
             }
         }
     }
 
-    private void Hintergrund(){
+    private void Compass(){
         viewpager.setCurrentItem(1);
+        ComOn=true;
+        image = (ImageView)findViewById(R.id.imageViewCompass);
+            image.setBackgroundResource(R.drawable.kompasstest);
+
+    }
+
+
+
+    private void Background(){
+        viewpager.setCurrentItem(1);
+          ImageView layout = (ImageView)findViewById(R.id.imageViewCompass);
+         layout.setBackgroundColor(0x000000);
         RelativeLayout layout1 = (RelativeLayout)findViewById(R.id.fragment_two_layout);
+
         if(Bild.equals("restaurant")) {
             layout1.setBackgroundResource(R.drawable.restaurant);
             Log.i("CultureWatch",Bild);
@@ -154,6 +200,32 @@ public class Watch extends FragmentActivity implements
         }
         else if(Bild.equals("other")){
             layout1.setBackgroundResource(R.drawable.other);
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (ComOn == true) {
+            //Log.i("CultureWatch",""+lnow.bearingTo(l));
+
+         // get the angle around the z-axis rotated
+            float degree = Math.round(event.values[0]);
+
+            // create a rotation animation (reverse turn degree degrees)
+            RotateAnimation ra = new RotateAnimation(
+                    currentDegree,
+                    -degree,
+                    Animation.RELATIVE_TO_SELF, 0.5f,
+                    Animation.RELATIVE_TO_SELF,
+                    0.5f);
+
+            // how long the animation will take place
+            ra.setDuration(210);
+            // set the animation after the end of the reservation status
+            ra.setFillAfter(true);
+            // Start the animation
+            image.startAnimation(ra);
+            currentDegree = -degree;
         }
     }
 
@@ -173,6 +245,9 @@ public class Watch extends FragmentActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
+                SensorManager.SENSOR_DELAY_GAME);
+
         mGoogleApiClient.connect();
     }
 
@@ -194,6 +269,7 @@ public class Watch extends FragmentActivity implements
     @Override
     protected void onPause() {
         super.onPause();
+        mSensorManager.unregisterListener(this);
         mGoogleApiClient.disconnect();
     }
 
@@ -202,6 +278,12 @@ public class Watch extends FragmentActivity implements
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "connection to location client suspended");
         }
+    }
+
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }
 
@@ -238,5 +320,16 @@ public class Watch extends FragmentActivity implements
             android:textColor="#ffffff" />
     </TableRow>
 </RelativeLayout>
+
+   <ImageView
+        android:id="@+id/imageViewCompass"
+        android:layout_width="320px"
+        android:layout_height="320px"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/kompasstest"
+       />
+
+
 
 */
