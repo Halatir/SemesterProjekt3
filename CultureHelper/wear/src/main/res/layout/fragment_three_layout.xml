@@ -7,7 +7,7 @@ android:background="#000000"
 
     <TextView
         android:layout_width="320px"
-        android:layout_height="100px"
+        android:layout_height="140px"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="gdsfdg"
         android:id="@+id/Nachricht"
@@ -17,15 +17,16 @@ android:background="#000000"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:background="#000000"
-        android:textSize="@dimen/abc_dialog_padding_top_material" />
+        android:textSize="16dp"
+        android:layout_below="@+id/fragment_three_layout" />
 
     <TableRow
-        android:layout_width="180px"
-        android:layout_height="180px"
+        android:layout_width="170px"
+        android:layout_height="170px"
         android:id="@+id/fragment_three_layout"
+        android:background="#000000"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:background="#000000"
-        android:layout_above="@+id/Nachricht"></TableRow>
+        android:layout_marginTop="23dp"></TableRow>
 
 </RelativeLayout>

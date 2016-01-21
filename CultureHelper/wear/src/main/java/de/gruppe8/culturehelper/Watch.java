@@ -5,7 +5,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
@@ -45,8 +44,7 @@ public class Watch extends FragmentActivity implements
     private float currentDegree = 0f;
     private SensorManager mSensorManager;
     private boolean ComOn=false;
-    private Location l;
-    private Location lnow;
+    private float degrees=0;
 
 
 
@@ -65,7 +63,6 @@ public class Watch extends FragmentActivity implements
                         //  .addApi(AppIndex.API)
                 .build();
 
-       // final Handler myHandler = new Handler();
         //viewpager initialisieren
         viewpager = (ViewPager) findViewById(R.id.pager);
         padapter = new PagerAdapter(getSupportFragmentManager());
@@ -86,14 +83,12 @@ public class Watch extends FragmentActivity implements
             }
 
             public void onPageSelected(int position) {
-                Log.i("CultureWatch", "" + position);
                 if (position == 0) {
                     if(FakeDrag==false) {
                         myHandler.postDelayed(mMyRunnable, 10);
                         FakeDrag=true;
                     }
-                    Handler myHandler = new Handler();
-                    myHandler.postDelayed(mMyRunnable2, 10000);
+
                     ComOn=false;
                 }
                 else if(position==1){
@@ -108,6 +103,7 @@ public class Watch extends FragmentActivity implements
                     Typeface type = Typeface.createFromAsset(getAssets(),"fonts/WorkSans-Regular.otf");
                     txt.setTypeface(type);
 
+                    //Hintergrund für Bildschirm 3 festlegen
                     if(Bild.equals("restaurant")){
                         layout2.setBackgroundResource(R.drawable.restaurant2);
                     }
@@ -125,29 +121,24 @@ public class Watch extends FragmentActivity implements
             }
         });
     }
-
+    //Zu beliebigen Zeitpunkt ausführbares Codefragment
     private Runnable mMyRunnable = new Runnable()
     {@Override
      public void run() {Log.i("CultureWatch", "" + viewpager.beginFakeDrag());}
     };
-    private Runnable mMyRunnable2 = new Runnable()
-    {@Override
-     public void run() {
-            RelativeLayout l=(RelativeLayout) findViewById(R.id.fragment_one_layout);
-            l.setBackgroundColor(0xFF000000);
-        }
-    };
+
 
 
     //Wenn Daten vom Handy abgesendet werden, werden sie hier empfangen
     public void onDataChanged(DataEventBuffer dataEvent) {
         for (DataEvent event : dataEvent) {
+            //Wenn eine Warnung gesendet wurde
             if (event.getType() == DataEvent.TYPE_CHANGED &&
                     event.getDataItem().getUri().getPath().equals("/Warnung")) {
                 Log.i("CultureWatch","recieved");
 
                 final DataMapItem dMI = DataMapItem.fromDataItem(event.getDataItem());
-                //Empfangbare Daten, zur weiterverarbeitung If states einbauen und Folge festlegen(externe Funktionen?)
+                //Empfangene Daten werden abgerufen:
                 Text = dMI.getDataMap().getString("Text");
                 Bild = dMI.getDataMap().getString("Bilddateiname");
                 Zeit = dMI.getDataMap().getLong("time");
@@ -155,18 +146,15 @@ public class Watch extends FragmentActivity implements
                 viewpager.setCurrentItem(1);
                 Background();
             }
-
+            //Wenn ein Event gesendet wurde
             if (event.getType() == DataEvent.TYPE_CHANGED &&
                     event.getDataItem().getUri().getPath().equals("/Event")) {
 
                 final DataMapItem dMI = DataMapItem.fromDataItem(event.getDataItem());
-                //Empfangbare Daten, zur weiterverarbeitung If states einbauen und Folge festlegen(externe Funktionen?)
+                //Empfangene Daten werden abgerufen:
                 Text = dMI.getDataMap().getString("Text");
                 Zeit = dMI.getDataMap().getLong("time");
-                //double LAT=dMI.getDataMap().getDouble("LAT");
-                //double LONG=dMI.getDataMap().getDouble("LAT");
-                //double LatNow=dMI.getDataMap().getDouble("LAT");
-                //double LongNow=dMI.getDataMap().getDouble("LAT");
+                degrees= dMI.getDataMap().getFloat("degrees");
                 Bild = "event";
                 viewpager.setCurrentItem(1);
                 Compass();
@@ -175,16 +163,19 @@ public class Watch extends FragmentActivity implements
         }
     }
 
+    //Startet die Berechnung des Richtungsweisers und dessen Darstellung
     private void Compass(){
         viewpager.setCurrentItem(1);
         ComOn=true;
         image = (ImageView)findViewById(R.id.imageViewCompass);
             image.setBackgroundResource(R.drawable.kompasstest);
+        RelativeLayout layout1 = (RelativeLayout)findViewById(R.id.fragment_two_layout);
+        layout1.setBackgroundResource(R.drawable.background);
 
     }
 
 
-
+    //Legt den Hintergrund des zweiten Bildschirms fest im Falle einer Warnung
     private void Background(){
         viewpager.setCurrentItem(1);
           ImageView layout = (ImageView)findViewById(R.id.imageViewCompass);
@@ -192,29 +183,29 @@ public class Watch extends FragmentActivity implements
         RelativeLayout layout1 = (RelativeLayout)findViewById(R.id.fragment_two_layout);
 
         if(Bild.equals("restaurant")) {
-            layout1.setBackgroundResource(R.drawable.restaurant);
-            Log.i("CultureWatch",Bild);
+            layout1.setBackgroundColor(0xFFFFDA00);
         }
         else if(Bild.equals("gesetz")){
-            layout1.setBackgroundResource(R.drawable.gesetz);
+            layout1.setBackgroundColor(0xFFFF0000);
         }
         else if(Bild.equals("other")){
-            layout1.setBackgroundResource(R.drawable.other);
+            layout1.setBackgroundColor(0xFF009ED4);
         }
     }
 
     @Override
+    //Hier wird der Richtungsweiser berechnet
     public void onSensorChanged(SensorEvent event) {
         if (ComOn == true) {
-            //Log.i("CultureWatch",""+lnow.bearingTo(l));
 
          // get the angle around the z-axis rotated
             float degree = Math.round(event.values[0]);
 
+
             // create a rotation animation (reverse turn degree degrees)
             RotateAnimation ra = new RotateAnimation(
                     currentDegree,
-                    -degree,
+                    -degree-degrees,
                     Animation.RELATIVE_TO_SELF, 0.5f,
                     Animation.RELATIVE_TO_SELF,
                     0.5f);
@@ -225,7 +216,7 @@ public class Watch extends FragmentActivity implements
             ra.setFillAfter(true);
             // Start the animation
             image.startAnimation(ra);
-            currentDegree = -degree;
+            currentDegree = -degree-degrees;
         }
     }
 
@@ -293,6 +284,20 @@ public class Watch extends FragmentActivity implements
 // aus dem xml: android.support.wearable.view.WatchViewStub
 
 /*
+
+one=true;
+                    Handler myHandler = new Handler();
+                    myHandler.postDelayed(mMyRunnable2, 2000);
+
+ private Runnable mMyRunnable2 = new Runnable()
+    {@Override
+     public void run() {
+            RelativeLayout l=(RelativeLayout) findViewById(R.id.fragment_one_layout);
+            if(one==true) {
+                l.setBackgroundColor(0xFF000000);
+            }
+        }
+    };
 
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"

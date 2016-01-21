@@ -109,7 +109,6 @@ public class DatabaseCall extends SQLiteOpenHelper {
         }
         c.close();
         return s;
-
     }
 
     //Anfrage, die einen String[][] zurückgeben kann
