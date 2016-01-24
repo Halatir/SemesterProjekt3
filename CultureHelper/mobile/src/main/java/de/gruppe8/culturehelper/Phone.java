@@ -1,10 +1,13 @@
 package de.gruppe8.culturehelper;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +48,7 @@ public class Phone extends AppCompatActivity implements
     //zur Richtungsberechnung
     private static Location LocNow;
     private static Location LocThere;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -221,33 +225,40 @@ public class Phone extends AppCompatActivity implements
     //---------------------- Positions Updates ----------------------
     @Override
     public void onConnected(Bundle bundle) {
-        LocationRequest locationRequest = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY) //is more likely to use GPS than other priority values
-                .setInterval(10*1000)
-                .setFastestInterval(5*1000);
+        //Notwendig, um Absturz auf Android 6.0 zu verhindern
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
 
-        LocationServices.FusedLocationApi
-                .requestLocationUpdates(mGoogleApiClient, locationRequest, this)
-                .setResultCallback(new ResultCallback() {
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            //Execute location service call if user has explicitly granted ACCESS_FINE_LOCATION..
 
-                    @Override
-                    public void onResult(Result result) {
-                        Status status = result.getStatus();
-                        if (status.getStatus().isSuccess()) {
-                            if (Log.isLoggable(TAG, Log.INFO)) {
-                                Log.i(TAG, "Successfully requested location updates");
+            LocationRequest locationRequest = LocationRequest.create()
+                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY) //is more likely to use GPS than other priority values
+                    .setInterval(10 * 1000)
+                    .setFastestInterval(5 * 1000);
+
+            LocationServices.FusedLocationApi
+                    .requestLocationUpdates(mGoogleApiClient, locationRequest, this)
+                    .setResultCallback(new ResultCallback() {
+
+                        @Override
+                        public void onResult(Result result) {
+                            Status status = result.getStatus();
+                            if (status.getStatus().isSuccess()) {
+                                if (Log.isLoggable(TAG, Log.INFO)) {
+                                    Log.i(TAG, "Successfully requested location updates");
+                                }
+                            } else {
+                                Log.i(TAG,
+                                        "Failed in requesting location updates, "
+                                                + "status code: "
+                                                + status.getStatusCode()
+                                                + ", message: "
+                                                + status.getStatusMessage());
                             }
-                        } else {
-                            Log.i(TAG,
-                                    "Failed in requesting location updates, "
-                                            + "status code: "
-                                            + status.getStatusCode()
-                                            + ", message: "
-                                            + status.getStatusMessage());
-                        }
 
-                    }
-                });
+                        }
+                    });
+        }
 
     }
 
